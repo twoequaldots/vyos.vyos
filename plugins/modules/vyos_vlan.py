@@ -182,11 +182,17 @@ from ansible_collections.vyos.vyos.plugins.module_utils.network.vyos.vyos import
 )
 
 
-def search_obj_in_list(vlan_id, lst):
+def search_obj_in_list(vlan_id, name, address, lst):
     obj = list()
     for o in lst:
         if o["vlan_id"] == vlan_id:
-            obj.append(o)
+            append = True
+            if not o.get('name') == name:
+                append = False
+            if not o.get('address') == address:
+                append = False
+            if append:
+                obj.append(o)
     return obj
 
 
@@ -201,7 +207,7 @@ def map_obj_to_commands(updates, module):
         address = w["address"]
         state = w["state"]
 
-        obj_in_have = search_obj_in_list(vlan_id, have)
+        obj_in_have = search_obj_in_list(vlan_id, name, address, have)
 
         if state == "absent":
             if obj_in_have:
@@ -224,11 +230,11 @@ def map_obj_to_commands(updates, module):
                             commands.append(
                                 cmd + " description {0}".format(name)
                             )
-                        elif w["address"]:
+                        if w["address"]:
                             commands.append(
                                 cmd + " address {0}".format(address)
                             )
-                        else:
+                        if not w["name"] and not w["address"]:
                             commands.append(cmd)
 
     if purge:
